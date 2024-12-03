@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+import Control.Monad.State.Strict
 import Data.Char (isDigit)
 import Data.Text (Text)
 import Data.Text qualified as T
@@ -21,12 +22,18 @@ takeChar :: Char -> Text -> Maybe Text
 takeChar _ "" = Nothing
 takeChar c s = if T.head s == c then Just (T.tail s) else Nothing
 
+run :: Monad m => (s -> m s) -> StateT s m ()
+run f = StateT f' where
+    f' s = ((), ) <$> f s
+
 takeExpr :: Text -> Maybe (Int, Text)
-takeExpr t = do
-    (firstNum, r) <- takeMul t >>= takeNum
-    (secondNum, r2) <- takeChar ',' r >>= takeNum
-    fin <- takeChar ')' r2
-    pure (firstNum * secondNum, fin)
+takeExpr = runStateT $ do
+    run takeMul
+    firstNum <- StateT takeNum
+    run $ takeChar ','
+    secondNum <- StateT takeNum
+    run $ takeChar ')'
+    pure $ firstNum * secondNum
 
 walk :: Text -> [Int]
 walk "" = []
