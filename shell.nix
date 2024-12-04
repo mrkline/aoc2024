@@ -1,6 +1,11 @@
-(import <nixos> {}).pkgs.haskellPackages.ghcWithPackages (p: with p; [
-    bytestring
-    mtl
-    text
-    vector
-])
+let pkgs = (import <nixos> {});
+in pkgs.mkShell {
+  packages = [
+    (pkgs.haskellPackages.ghcWithPackages (p: with p; [
+        bytestring
+        mtl
+        text
+        vector
+    ]))
+  ];
+}
