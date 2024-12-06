@@ -4,6 +4,8 @@ in pkgs.mkShell {
     (pkgs.haskellPackages.ghcWithPackages (p: with p; [
         bytestring
         mtl
+        linear
+        parallel
         split
         text
         vector
