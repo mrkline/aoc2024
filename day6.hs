@@ -72,20 +72,10 @@ path bounds loc dir obs
     | otherwise = (loc, dir) : path bounds newLoc newDir obs where
         (newLoc, newDir) = move loc dir obs
 
--- All coords but one (the guard's starting posit)
-allCoordsBut :: Point -> Point -> Point -> [Point]
-allCoordsBut bounds loc pt
-    | pt ^. _y >= bounds ^. _y = []
-    | pt ^. _x >= bounds ^. _x = allCoordsBut bounds loc (pt & _y +~ 1 & _x .~ 0)
-    | pt == loc = allCoordsBut bounds loc (pt & _x +~ 1)
-    | otherwise = pt : allCoordsBut bounds loc (pt & _x +~ 1)
-
-allCoordsBut' :: Point -> Point -> [Point]
-allCoordsBut' bounds loc = allCoordsBut bounds loc $ V2 0 0
-
--- All flavors of the dungeon with a new obstacle, except at the player's posit.
-obstructeds :: Point -> Point -> Obstacles -> [Obstacles]
-obstructeds bounds loc obs = (`HS.insert` obs) <$> allCoordsBut' bounds loc
+-- All flavors of the dungeon with a new obstacle along the guard's path,
+-- except at the starting point.
+obstructeds :: Point -> Obstacles -> HashSet Point -> [Obstacles]
+obstructeds loc obs visited = (`HS.insert` obs) <$> HS.toList (loc `HS.delete` visited)
 
 isLoop :: Point -> Point -> Direction -> Obstacles -> Bool
 isLoop bounds loc dir obs = retread mempty p where
@@ -112,4 +102,4 @@ main = do
     -- Part 2
     -- Evaluate this shit in paralell; it's still a few thousand runs.
     print . length . filter id . withStrategy (parBuffer 32 rseq) $
-        isLoop bounds gloc gdir <$> obstructeds bounds gloc obs
+        isLoop bounds gloc gdir <$> obstructeds gloc obs visited
